@@ -1,13 +1,16 @@
-import getAcronymLinksStateField from 'acronym-link.field';
-import { getDisplayName } from 'acronym-link.functions';
 import { Plugin } from 'obsidian';
+import { getDisplayName } from 'src/smart-link-alias.functions';
+import { getLinkDecorationsStateField } from './link-decorations.field';
 
 
-export default class AcronymLinksPlugin extends Plugin {
+export class SmartLinkAliasPlugin extends Plugin {
 
 	async onload() {
-		this.registerEditorExtension(getAcronymLinksStateField(this));
+
+		// Register StateField Code Mirror extension for showing links on edit mode
+		this.registerEditorExtension(getLinkDecorationsStateField(this));
 		
+		// Register Markdown Post Processor to update links on reading mode
 		this.registerMarkdownPostProcessor((el, ctx) => {
 			const internalLinks = el.querySelectorAll("a.internal-link");
 
@@ -22,3 +25,4 @@ export default class AcronymLinksPlugin extends Plugin {
 	}
 
 }
+

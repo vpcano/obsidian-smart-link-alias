@@ -11,25 +11,27 @@ import {
   EditorView,
   WidgetType,
 } from '@codemirror/view';
-import { getDisplayName } from 'acronym-link.functions';
-import AcronymLinksPlugin from 'main';
 import { App } from 'obsidian';
+import { getDisplayName } from './smart-link-alias.functions';
+import SmartLinkAliasPlugin from './main';
 
 
-export default function getAcronymLinksStateField(plugin: AcronymLinksPlugin) {
+export function getLinkDecorationsStateField(plugin: SmartLinkAliasPlugin) {
 
-	const acronymLinkField = StateField.define<DecorationSet>({
+	const linkDecorationsField = StateField.define<DecorationSet>({
 		create(): DecorationSet {
 			return Decoration.none;
 		},
 		update(oldState: DecorationSet, transaction: Transaction): DecorationSet {
 
+			// Create new set of decorations
 			const builder = new RangeSetBuilder<Decoration>();
 
 			let linkWithAliasStart: number | null = null;
 			let hrefContent: string | null = null;
 			let aliasContent: string | null = null;
 
+			// Capture internal links that have an alias
 			syntaxTree(transaction.state).iterate({
 				enter(node) {
 					if (node.type.name == 'formatting-link_formatting-link-start') {
@@ -41,13 +43,18 @@ export default function getAcronymLinksStateField(plugin: AcronymLinksPlugin) {
 					if (node.type.name == 'formatting-link_formatting-link-end') {
 						if (linkWithAliasStart != null &&
 							hrefContent != null &&
-							aliasContent != null
+							(
+								aliasContent === 'short' ||
+								aliasContent === 'long' ||
+								aliasContent === 'full'
+							)
 						) {
+							// When a link with a reserved alias is found, add a new decoration to replace it
 							builder.add(
 								linkWithAliasStart,
 								node.to,
 								Decoration.replace({
-									widget: new AcronymLinkWidget(hrefContent, aliasContent, plugin.app),
+									widget: new LinkPreviewWidget(hrefContent, aliasContent, plugin.app),
 								})
 							);
 						}
@@ -57,6 +64,7 @@ export default function getAcronymLinksStateField(plugin: AcronymLinksPlugin) {
 						return;
 					}
 					if (linkWithAliasStart != null) {
+						// Get the content of the link and the alias
 						const content = transaction.state.doc.sliceString(node.from, node.to);
 						if (node.type.name == 'hmd-internal-link_link-has-alias') {
 							hrefContent = content;
@@ -70,6 +78,7 @@ export default function getAcronymLinksStateField(plugin: AcronymLinksPlugin) {
 
 			const cursor = transaction.state.selection.main;
 			const decorations = builder.finish();
+			// Return all decorations except those that are within the cursor selection
 			return decorations.update({
 				filter: (from, to) => from > cursor.to || to < cursor.from
 			});
@@ -79,10 +88,10 @@ export default function getAcronymLinksStateField(plugin: AcronymLinksPlugin) {
 		},
 	});
 
-	return acronymLinkField;
+	return linkDecorationsField;
 }
 
-class AcronymLinkWidget extends WidgetType {
+class LinkPreviewWidget extends WidgetType {
 	href: string;
 	content: string;
 	app: App;
@@ -103,7 +112,7 @@ class AcronymLinkWidget extends WidgetType {
 		a.innerText = this.content;
 		a.addEventListener('click', () => {
 			this.app.workspace.openLinkText(this.href, "");
-		})
+		});
 
 		span.appendChild(a);
 		return span;
