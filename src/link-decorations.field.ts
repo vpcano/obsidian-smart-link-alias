@@ -17,12 +17,18 @@ import SmartLinkAliasPlugin from './main';
 
 
 export function getLinkDecorationsStateField(plugin: SmartLinkAliasPlugin) {
+	let isMouseDown = false;
 
 	const linkDecorationsField = StateField.define<DecorationSet>({
 		create(): DecorationSet {
 			return Decoration.none;
 		},
 		update(oldState: DecorationSet, transaction: Transaction): DecorationSet {
+
+			oldState = oldState.map(transaction.changes);
+
+			const cursor = transaction.state.selection.main;
+			const editorView = plugin.app.workspace.activeEditor?.editor;
 
 			// Create new set of decorations
 			const builder = new RangeSetBuilder<Decoration>();
@@ -49,14 +55,45 @@ export function getLinkDecorationsStateField(plugin: SmartLinkAliasPlugin) {
 								aliasContent === 'full'
 							)
 						) {
-							// When a link with a reserved alias is found, add a new decoration to replace it
-							builder.add(
-								linkWithAliasStart,
-								node.to,
-								Decoration.replace({
-									widget: new LinkPreviewWidget(hrefContent, aliasContent, plugin.app),
-								})
-							);
+							if (editorView?.hasFocus()) {
+
+								// Check if the link was previously decorated
+								let wasDecorated = false;
+								oldState.between(linkWithAliasStart, node.to, () => {
+									wasDecorated = true;
+									return false; // Stop iterating
+								});
+
+								if (linkWithAliasStart > cursor.to || node.to < cursor.from) {
+									builder.add(
+										linkWithAliasStart,
+										node.to,
+										Decoration.replace({
+											widget: new LinkPreviewWidget(hrefContent, aliasContent, plugin.app),
+										})
+									);
+								}
+								else {
+									if (isMouseDown && wasDecorated) {
+										builder.add(
+											linkWithAliasStart,
+											node.to,
+											Decoration.replace({
+												widget: new LinkPreviewWidget(hrefContent, aliasContent, plugin.app),
+											})
+										);
+									}
+								}
+							}
+							else {
+								builder.add(
+									linkWithAliasStart,
+									node.to,
+									Decoration.replace({
+										widget: new LinkPreviewWidget(hrefContent, aliasContent, plugin.app),
+									})
+								);
+							}
 						}
 						linkWithAliasStart = null;
 						hrefContent = null;
@@ -76,17 +113,19 @@ export function getLinkDecorationsStateField(plugin: SmartLinkAliasPlugin) {
 				},
 			});
 
-			const cursor = transaction.state.selection.main;
-			const decorations = builder.finish();
-			// Return all decorations except those that are within the cursor selection
-			return decorations.update({
-				filter: (from, to) => from > cursor.to || to < cursor.from
-			});
+			return builder.finish();
 		},
 		provide(field: StateField<DecorationSet>): Extension {
 			return EditorView.decorations.from(field);
 		},
 	});
+
+	document.addEventListener('mousedown', () => {
+        isMouseDown = true;
+    }, true);
+	document.addEventListener('mouseup', () => {
+        isMouseDown = false;
+    }, true);
 
 	return linkDecorationsField;
 }
