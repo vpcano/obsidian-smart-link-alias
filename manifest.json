@@ -3,7 +3,7 @@
 	"name": "Smart Link Alias",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Enhance your internal link management in Obsidian with dynamic alias customization. Display short, full, or combined titles for your notes effortlessly.",
+	"description": "Enhance your internal links management with dynamic alias customization. Display short, full, or combined titles for your notes effortlessly.",
 	"author": "Victor Perez-Cano",
 	"authorUrl": "",
 	"fundingUrl": "",
