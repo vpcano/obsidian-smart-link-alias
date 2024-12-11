@@ -2,13 +2,7 @@
 
 **SmartLinkAlias** is an Obsidian plugin that enhances your internal link management by allowing you to dynamically control how note titles appear in links. Whether you're working with acronyms, abbreviations, or custom aliases, this plugin provides you with powerful options to display your links exactly how you want.
 
-<!-- ![SmartLinkAlias in action](GIF) -->
-
-## Installation
-
-1. Open Obsidian and go to **Settings** → **Community plugins**.
-2. Click **Browse** and search for **SmartLinkAlias**.
-3. Click **Install** and then **Enable** to activate the plugin.
+![SmartLinkAlias in action](img/demo.gif)
 
 ## Usage
 
