@@ -26,7 +26,6 @@
 
 - [x] Base functionality in read mode
 - [x] Base functionality in edit mode
-- [ ] Fix BUG: links on headers not shown properly on edit mode
 - [ ] Customize display format via plugin settings
 - [ ] Add a tooltip when hovering a shortened link
 - [ ] Other ways to select the display mode ??

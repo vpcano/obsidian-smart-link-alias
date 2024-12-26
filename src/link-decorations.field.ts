@@ -40,13 +40,13 @@ export function getLinkDecorationsStateField(plugin: SmartLinkAliasPlugin) {
 			// Capture internal links that have an alias
 			syntaxTree(transaction.state).iterate({
 				enter(node) {
-					if (node.type.name.startsWith('formatting-link_formatting-link-start')) {
+					if (node.type.name.contains('formatting-link_formatting-link-start')) {
 						linkWithAliasStart = node.from;
 						hrefContent = null;
 						aliasContent = null;
 						return;
 					}
-					if (node.type.name.startsWith('formatting-link_formatting-link-end')) {
+					if (node.type.name.contains('formatting-link_formatting-link-end')) {
 						if (linkWithAliasStart != null &&
 							hrefContent != null &&
 							(
@@ -103,10 +103,10 @@ export function getLinkDecorationsStateField(plugin: SmartLinkAliasPlugin) {
 					if (linkWithAliasStart != null) {
 						// Get the content of the link and the alias
 						const content = transaction.state.doc.sliceString(node.from, node.to);
-						if (node.type.name.startsWith('hmd-internal-link_link-has-alias')) {
+						if (node.type.name.contains('hmd-internal-link_link-has-alias')) {
 							hrefContent = content;
 						}
-						else if (node.type.name.startsWith('hmd-internal-link_link-alias')) {
+						else if (node.type.name.contains('hmd-internal-link_link-alias')) {
 							aliasContent = content;
 						}
 					}
@@ -120,12 +120,21 @@ export function getLinkDecorationsStateField(plugin: SmartLinkAliasPlugin) {
 		},
 	});
 
-	document.addEventListener('mousedown', () => {
-        isMouseDown = true;
-    }, true);
-	document.addEventListener('mouseup', () => {
-        isMouseDown = false;
-    }, true);
+	plugin.registerDomEvent(document, 'mousedown', () => {
+		isMouseDown = true;
+	}, true);
+	plugin.registerDomEvent(document, 'mouseup', () => {
+		isMouseDown = false;
+	}, true);
+
+	plugin.registerEvent(plugin.app.workspace.on('window-open', (_, window) => {
+		plugin.registerDomEvent(window, 'mousedown', () => {
+			isMouseDown = true;
+		}, true);
+		plugin.registerDomEvent(window, 'mouseup', () => {
+			isMouseDown = false;
+		}, true);
+	}));
 
 	return linkDecorationsField;
 }
